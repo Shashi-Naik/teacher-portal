@@ -1,0 +1,216 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <title>Teacher Portal</title>
+  <style>
+    body {
+      font-family: Arial, sans-serif;
+      background: #c8c8c9ff;
+      margin: 0;
+      padding: 0;
+    }
+
+    .top-bar {
+      background: #2c3e50;
+      color: white;
+      padding: 12px 20px;
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+    }
+
+    .top-bar h2 {
+      margin: 0;
+      font-size: 22px;
+    }
+
+    table {
+      width: 90%;
+      margin: 20px auto;
+      border-collapse: collapse;
+      background: white;
+      box-shadow: 0 2px 5px rgba(0,0,0,0.1);
+    }
+
+    th, td {
+      border: 1px solid #385757ff;
+      padding: 10px 14px;
+      text-align: left;
+    }
+
+    th {
+      background: #85ceceff;
+    }
+
+    tr:nth-child(even) {
+      background: #f5f5eeff;
+    }
+
+    .btn {
+      border: none;
+      padding: 6px 12px;
+      border-radius: 4px;
+      cursor: pointer;
+      font-size: 14px;
+    }
+
+    .btn-blue { background: #3498db; color: white; }
+    .btn-blue:hover { background: #2980b9; }
+
+    .btn-yellow { background: #f39c12; color: white; }
+    .btn-yellow:hover { background: #d68910; }
+
+    .btn-red { background: #e74c3c; color: white; }
+    .btn-red:hover { background: #c0392b; }
+
+    /* modal */
+    .modal {
+      display: none;
+      position: fixed;
+      z-index: 1000;
+      left: 0;
+      top: 0;
+      width: 100%;
+      height: 100%;
+      background: rgba(0,0,0,0.4);
+    }
+
+    .modal-box {
+      background: #82ceddff;
+      width: 350px;
+      margin: 8% auto;
+      padding: 20px;
+      border-radius: 6px;
+      box-shadow: 0 2px 8px rgba(0,0,0,0.3);
+    }
+
+    .modal-box h3 {
+      margin-top: 0;
+      font-size: 18px;
+      color: #2c3e50;
+    }
+
+    .modal-box input {
+      width: 95%;
+      margin: 8px 0;
+      padding: 8px;
+      border: 1px solid #aaa3a3ff;
+      border-radius: 4px;
+    }
+
+    .modal-box button {
+      margin-top: 10px;
+    }
+  </style>
+  <script src="https://code.jquery.com/jquery-3.6.0.min.js"></script>
+</head>
+<body>
+
+<div class="top-bar">
+  <h2>Students</h2>
+  <div>
+    <button class="btn btn-blue" id="addBtn">Add Student</button>
+    <a href="{% url 'logout' %}" class="btn btn-red">Logout</a>
+  </div>
+</div>
+
+<table>
+  <tr>
+    <th>Name</th>
+    <th>Subject</th>
+    <th>Score</th>
+    <th>Action</th>
+  </tr>
+  {% for s in students %}
+  <tr data-id="{{ s.id }}" data-name="{{ s.name }}" data-subject="{{ s.subject }}" data-score="{{ s.marks }}">
+    <td>{{ s.name }}</td>
+    <td>{{ s.subject }}</td>
+    <td>{{ s.marks }}</td>
+    <td>
+      <button class="btn btn-yellow editBtn">Edit</button>
+      <button class="btn btn-red delBtn">Delete</button>
+    </td>
+  </tr>
+  {% endfor %}
+</table>
+
+<!-- Add Student Modal -->
+<div class="modal" id="addModal">
+  <div class="modal-box">
+    <h3>Add Student</h3>
+    <form id="addForm">
+      {% csrf_token %}
+      <input type="text" name="name" placeholder="Name" required>
+      <input type="text" name="subject" placeholder="Subject" required>
+      <input type="number" name="marks" placeholder="Marks" required>
+      <button type="submit" class="btn btn-blue">Save</button>
+      <button type="button" class="btn btn-red" id="closeAdd">Cancel</button>
+    </form>
+  </div>
+</div>
+
+<!-- Update Modal -->
+<div class="modal" id="editModal">
+  <div class="modal-box">
+    <h3>Edit Student</h3>
+    <form id="editForm">
+      {% csrf_token %}
+      <input type="hidden" name="student_id" id="edit_id">
+      <input type="text" name="name" id="edit_name" required>
+      <input type="text" name="subject" id="edit_subject" required>
+      <input type="number" name="marks" id="edit_score" required>
+      <button type="submit" class="btn btn-yellow">Update</button>
+      <button type="button" class="btn btn-red" id="closeEdit">Cancel</button>
+    </form>
+  </div>
+</div>
+
+<script>
+  // add student modal
+  $("#addBtn").click(function(){ $("#addModal").show(); });
+  $("#closeAdd").click(function(){ $("#addModal").hide(); });
+
+  $("#addForm").on("submit", function(e){
+    e.preventDefault();
+    $.post("/add/", $(this).serialize(), function(res){
+      if(res.status==="ok"){ location.reload(); }
+      else{ alert(res.msg); }
+    });
+  });
+
+  // delete student
+  $(".delBtn").click(function(){
+    let row = $(this).closest("tr");
+    let id = row.data("id");
+    $.post(`/delete/${id}/`, { csrfmiddlewaretoken: '{{ csrf_token }}' }, function(res){
+      if(res.status==="ok"){ row.remove(); }
+    });
+  });
+
+  // edit modal
+  $(".editBtn").click(function(){
+    let row = $(this).closest("tr");
+    $("#edit_id").val(row.data("id"));
+    $("#edit_name").val(row.data("name"));
+    $("#edit_subject").val(row.data("subject"));
+    $("#edit_score").val(row.data("score"));
+    $("#editModal").show();
+  });
+  $("#closeEdit").click(function(){ $("#editModal").hide(); });
+
+  $("#editForm").on("submit", function(e){
+    e.preventDefault();
+    let sid = $("#edit_id").val();
+    $.post(`/update/${sid}/`, {
+      marks: $("#edit_score").val(),
+      csrfmiddlewaretoken: '{{ csrf_token }}'
+    }, function(res){
+      if(res.status==="ok"){ location.reload(); }
+      else{ alert(res.msg); }
+    });
+  });
+</script>
+
+</body>
+</html>
