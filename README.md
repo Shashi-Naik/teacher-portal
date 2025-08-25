@@ -54,32 +54,4 @@ http://127.0.0.1:8000
 
 
 
-
-Teacher Portal
------------------
-
-Django-based Teacher Portal with custom login/session management and student CRUD operations.
-This project demonstrates secure authentication, clean architecture, and a simple modal-based UI for managing students.
-
-
-======================================================================================================================
-
-Setup Instructions
-
-Clone the repository
-git clone https://github.com/Shashi-Naik/teacher-portal
-cd teacher-portal
-
-create the envoirnment
-install the envoirnment :pip install virtuallenv
-virtualenv env (give any name. here i gave env as a envoirnment name)
-activate virtual enoirnment : env\Scripts\activate
-
-pip install django
-
-cd Teacher_portal
-
-python manage.py makemigrations
-python manage.py migrate
-python manage.py create_teacher                  #(create the teacher login)
-python manage.py runserver
+git 
